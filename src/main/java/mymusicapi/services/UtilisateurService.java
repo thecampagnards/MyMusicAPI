@@ -79,18 +79,4 @@ public class UtilisateurService {
         }
     }
 
-    @POST
-    @Path("/upload")
-    @Consumes({MediaType.MULTIPART_FORM_DATA})
-    public Response uploadFileWithData(
-            @FormDataParam("file") InputStream fileInputStream,
-            @FormDataParam("file") FormDataContentDisposition cdh) throws Exception{
-
-        Image img = ImageIO.read(fileInputStream);
-        JOptionPane.showMessageDialog(null, new JLabel(new ImageIcon(img)));
-        System.out.println(cdh.getName());
-
-        return Response.ok("Cool Tools!").build();
-    }
-
 }

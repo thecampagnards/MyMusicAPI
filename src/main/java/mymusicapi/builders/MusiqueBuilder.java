@@ -7,6 +7,12 @@ import com.mpatric.mp3agic.Mp3File;
 
 import org.apache.commons.io.FileUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.*;
 import java.sql.PreparedStatement;
@@ -46,7 +52,6 @@ public class MusiqueBuilder {
 
     public static Musique addMusique(Musique musique) throws Exception
     {
-
         //on récupère le fichier
         File file = new File(System.getProperty("java.io.tmpdir") + "/tmp.mp3");
         file.deleteOnExit();
@@ -57,14 +62,12 @@ public class MusiqueBuilder {
         Mp3File mp3file = new Mp3File(file);
 
         //ajout des données du fichier à la fiche dans la bdd
-        if(musique.getTitle().isEmpty()){
-            if(mp3file.getId3v1Tag() != null){
-                musique.setTitle(mp3file.getId3v1Tag().getTitle());
-            }else if(mp3file.getId3v2Tag() != null){
-                musique.setTitle(mp3file.getId3v2Tag().getTitle());
-            }else{
-                musique.setTitle(mp3file.getFilename());
-            }
+        if(mp3file.hasId3v1Tag()){
+            musique.setTitle(mp3file.getId3v1Tag().getTitle());
+            musique.setArtist(mp3file.getId3v1Tag().getArtist());
+        }else if(mp3file.hasId3v2Tag()){
+            musique.setTitle(mp3file.getId3v2Tag().getTitle());
+            musique.setArtist(mp3file.getId3v2Tag().getArtist());
         }
         if(musique.getLength() != null){
             musique.setLength(mp3file.getLengthInSeconds());
@@ -72,8 +75,8 @@ public class MusiqueBuilder {
 
         PreparedStatement ps = DataBase.getConnection().prepareStatement(
                 "INSERT INTO MUSIQUE " +
-                        "(title, length) " +
-                        "VALUES(?,?)"
+                        "(title, artist, length) " +
+                        "VALUES(?,?,?)"
                 , Statement.RETURN_GENERATED_KEYS
         );
         ps = createRequestMusique(ps, musique);
@@ -87,6 +90,16 @@ public class MusiqueBuilder {
                 //enregistrement du fichier mp3
                 ResourceBundle rb = ResourceBundle.getBundle("main");
                 mp3file.save(rb.getString("RESOURCE_PATH") +"/upload/"+musique.getId() + ".mp3");
+
+                //recupération de l'image
+                if (mp3file.hasId3v2Tag() && mp3file.getId3v2Tag().getAlbumImage() != null ) {
+                    BufferedImage img = ImageIO.read(new ByteArrayInputStream(mp3file.getId3v2Tag().getAlbumImage()));
+                    //enregistrement de l'image
+                    File fileImage = new File(rb.getString("RESOURCE_PATH") +"/upload/"+musique.getId() + ".jpg");
+                    ImageIO.write(img, "jpg", fileImage);
+
+                    musique.setImage("http://"+InetAddress.getLocalHost().getHostAddress()+":8081/upload/"+ musique.getId() + ".jpg");
+                }
                 musique.setLink("http://"+InetAddress.getLocalHost().getHostAddress()+":8081/upload/"+ musique.getId() + ".mp3");
             }
             else {
@@ -97,12 +110,37 @@ public class MusiqueBuilder {
         return musique;
     }
 
+    public static void addImageMusique(Long id, BufferedImage bufferedImage) throws Exception
+    {
+        ResourceBundle rb = ResourceBundle.getBundle("main");
+        //on converti la photo en jpg
+        BufferedImage newBufferedImage = new BufferedImage(bufferedImage.getWidth(),
+                bufferedImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+        newBufferedImage.createGraphics().drawImage(bufferedImage, 0, 0, Color.WHITE, null);
+        //on enregistre la photo
+        ImageIO.write(newBufferedImage, "jpg", new File(rb.getString("RESOURCE_PATH") + "/upload/" + id + ".jpg"));
+
+        //on recupere le mp3
+        Mp3File mp3file = new Mp3File(rb.getString("RESOURCE_PATH") + "/upload/" + id + ".mp3");
+        if (mp3file.hasId3v2Tag()) {
+            //recuperer l'image en byte
+            WritableRaster raster = bufferedImage .getRaster();
+            DataBufferByte data   = (DataBufferByte) raster.getDataBuffer();
+            mp3file.getId3v2Tag().setAlbumImage(data.getData(), "image");
+
+            //on l'enregistre
+            mp3file.save(rb.getString("RESOURCE_PATH") +"/upload/1.mp3");
+        }
+        return;
+    }
+
     public static Musique editMusique(Musique musique) throws Exception
     {
         PreparedStatement ps = DataBase.getConnection().prepareStatement(
                 "UPDATE MUSIQUE SET " +
                         "title = ?, " +
-                        "length = ?" +
+                        "artist = ?, " +
+                        "length = ? " +
                         "WHERE id = ?"
                 , Statement.RETURN_GENERATED_KEYS
         );
@@ -113,19 +151,23 @@ public class MusiqueBuilder {
 
     private static PreparedStatement createRequestMusique(PreparedStatement ps, Musique musique) throws SQLException {
         ps.setString(1,musique.getTitle());
-        ps.setLong(2,musique.getLength());
+        ps.setString(2,musique.getArtist());
+        ps.setLong(3,musique.getLength());
         if(musique.getId() != null){
             ps.setLong(4,musique.getId());
         }
         return ps;
     }
 
-    private static Musique createObjectMusique(ResultSet rs) throws SQLException, UnknownHostException {
+    public static Musique createObjectMusique(ResultSet rs) throws Exception {
         Musique musique = new Musique();
         musique.setId(rs.getLong("id"));
         musique.setTitle(rs.getString("title"));
+        musique.setArtist(rs.getString("artist"));
         musique.setLength(rs.getLong("length"));
         musique.setLink("http://"+InetAddress.getLocalHost().getHostAddress()+":8081/upload/"+ musique.getId() + ".mp3");
+        musique.setImage("http://"+InetAddress.getLocalHost().getHostAddress()+":8081/upload/"+ musique.getId() + ".jpg");
+        musique.setUtilisateur(UtilisateurBuilder.getUtilisateur(rs.getLong("id_utilisateur")));
         return musique;
     }
 }

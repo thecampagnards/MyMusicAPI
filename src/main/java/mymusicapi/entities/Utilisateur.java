@@ -1,11 +1,14 @@
 package mymusicapi.entities;
 
+import java.util.ArrayList;
+
 public class Utilisateur {
 
     private Long id;
     private String pseudo;
     private String motdepasse;
     private String email;
+    private ArrayList<Playlist> playlists;
 
     public Utilisateur() {
     }
@@ -40,5 +43,13 @@ public class Utilisateur {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public ArrayList<Playlist> getPlaylists() {
+        return playlists;
+    }
+
+    public void setPlaylists(ArrayList<Playlist> playlists) {
+        this.playlists = playlists;
     }
 }

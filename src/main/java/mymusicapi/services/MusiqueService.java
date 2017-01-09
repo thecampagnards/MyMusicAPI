@@ -6,10 +6,16 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import mymusicapi.builders.MusiqueBuilder;
 import mymusicapi.entities.Musique;
 import mymusicapi.tools.Json;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import javax.imageio.ImageIO;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.regex.Pattern;
 
@@ -40,7 +46,7 @@ public class MusiqueService {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addMusiqueByLink(String data) throws Exception {
+    public Response addMusique(String data) throws Exception {
         try {
 
             //on recupere les données du post
@@ -61,6 +67,23 @@ public class MusiqueService {
 
             musique = MusiqueBuilder.addMusique(musique);
             return Response.status(200).entity(Json.serialize(musique,true)).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Json.serialize(e, true)).build();
+        }
+    }
+
+    @POST
+    @Path("image/{id}")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public Response addImageMusique(
+            @PathParam("id") Long id,
+            @FormDataParam("file") InputStream fileInputStream,
+            @FormDataParam("file") FormDataContentDisposition cdh
+            ) throws Exception {
+        try {
+            BufferedImage bufferedImage = ImageIO.read(fileInputStream);
+            MusiqueBuilder.addImageMusique(id, bufferedImage);
+            return Response.status(200).build();
         } catch (Exception e) {
             return Response.status(500).entity(Json.serialize(e, true)).build();
         }
