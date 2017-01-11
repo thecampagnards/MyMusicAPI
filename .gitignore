@@ -1,0 +1,48 @@
+
+# Created by https://www.gitignore.io/api/linux,composer,laravel
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
+
+
+### Composer ###
+composer.phar
+/vendor/
+
+# Commit your application's lock file http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file
+# You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
+# composer.lock
+
+
+### Laravel ###
+/bootstrap/compiled.php
+/vendor
+/node_modules
+Homestead.yaml
+Homestead.json
+.env.local.php
+.env.php
+.env
+composer.lock
+
+# End of https://www.gitignore.io/api/linux,composer,laravel
+
+/vendor
+/.idea
+Homestead.json
+Homestead.yaml
+.env
+
+/public/upload
