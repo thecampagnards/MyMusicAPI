@@ -38,14 +38,13 @@ $app->group(['prefix' => 'playlists'], function () use ($app) {
   ->delete('/{id}', ['uses' =>'PlaylistController@delete']);
 });
 
+$app->post('/auth/login', 'AuthenticationController@authenticate');
 
-
-/*$app->group(['middleware' => 'auth'], function () use ($app) {
-    $app->get('/', function ()    {
-        // Uses Auth Middleware
+$app->group(['middleware' => 'auth'], function($app)
+{
+    $app->get('/test', function() {
+        return response()->json([
+            'message' => 'Hello World!',
+        ]);
     });
-
-    $app->get('user/profile', function () {
-        // Uses Auth Middleware
-    });
-});*/
+});

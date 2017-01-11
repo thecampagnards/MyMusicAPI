@@ -9,7 +9,9 @@
         "laravel/lumen-framework": "5.3.*",
         "vlucas/phpdotenv": "~2.2",
         "guzzlehttp/guzzle": "^6.2",
-        "shubhamjain/php-id3": "dev-master"
+        "shubhamjain/php-id3": "dev-master",
+        "illuminate/session": "^5.3",
+        "tymon/jwt-auth": "^1.0@dev"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
@@ -19,7 +21,10 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "classmap": [
