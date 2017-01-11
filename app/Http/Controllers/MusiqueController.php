@@ -17,6 +17,7 @@ class MusiqueController extends Controller
       // on recupère les musiques
       $musiques = DB::table('MUSIQUE')
       ->where($this->cleanForQuery($data))
+      ->orderBy('id', 'DESC')
       ->get();
 
       // on les parcours
@@ -78,16 +79,6 @@ class MusiqueController extends Controller
     }
   }
 
-  public static function addFiles(&$musique){
-    // on ajout le lien + l'Image
-    if(file_exists(getcwd().'/upload/'.$musique->id.'.mp3')){
-      $musique->link = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].'/upload/'.$musique->id.'.mp3';
-    }
-    if(file_exists(getcwd().'/upload/'.$musique->id.'.jpg')){
-      $musique->image = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].'/upload/'.$musique->id.'.jpg';
-    }
-  }
-
   private function cleanForQuery($musique){
     if(!empty($musique->utilisateur)){
       $musique->id_utilisateur = $musique->utilisateur->id;
@@ -108,9 +99,7 @@ class MusiqueController extends Controller
 
     // si on a une url
     if(!empty($musique->url)){
-
       $client = new Client();
-
       //check si youtube
       if (preg_match("/(http:|https:)?\\/\\/(www\\.)?(youtube.com|youtu.be)\\/(watch)?(\\?v=)?(\\S+)?/", $musique->url) === 1){
         // promise de la requete l'api mp3 downloader
@@ -133,10 +122,12 @@ class MusiqueController extends Controller
       if(!empty($promise)){
         $promise->wait();
       }
-      // on télécharge le mp3
-      $response = $client->request('GET', $musique->url, ['sink' => getcwd().'/upload/'.$musique->id.'.mp3']);
+      // on télécharge le mp3 avec un delay de 15s
+      do{
+        $response = $client->request('GET', $musique->url, ['sink' => getcwd().'/upload/'.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
+      }while($response->getStatusCode() !== 200);
       // on recupere les infos du mp3 + ajout du cover
-      $newData = json_decode(exec(getcwd().'/../app/Bash/getInfoMP3.sh '.$musique->id.' '.getcwd().'/upload'));
+      $newData = json_decode(exec(escapeshellcmd('python '.getcwd().'/../app/Scripts/getInfoMP3.py '.$musique->id.' '.getcwd().'/upload')));
       // on merge les données
       $musique = (object)array_merge((array)$newData, (array)$musique);
     }

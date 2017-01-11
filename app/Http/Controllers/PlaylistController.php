@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
-use App\Http\Controllers\MusiqueController;
 
 class PlaylistController extends Controller
 {
@@ -39,7 +38,7 @@ class PlaylistController extends Controller
         ->get();
         // on ajoute les fichiers
         foreach ($playlist->musiques as &$musique) {
-          MusiqueController::addFiles($musique);
+          $this->addFiles($musique);
         }
 
       }
