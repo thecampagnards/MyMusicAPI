@@ -30,7 +30,7 @@ class MusiqueController extends Controller
           $musique->utilisateur = DB::table('UTILISATEUR')
           ->where(['id' => $musique->id_utilisateur])
           ->first();
-          unset($musique->utilisateur->password)
+          unset($musique->utilisateur->password);
         }
 
         // on ajoute les playlists
