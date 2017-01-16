@@ -29,7 +29,8 @@ class MusiqueController extends Controller
         if(!empty($musique->id_utilisateur)){
           $musique->utilisateur = DB::table('UTILISATEUR')
           ->where(['id' => $musique->id_utilisateur])
-          ->get();
+          ->first();
+          unset($musique->utilisateur->password)
         }
 
         // on ajoute les playlists
@@ -81,7 +82,7 @@ class MusiqueController extends Controller
 
   private function cleanForQuery($musique){
     if(!empty($musique->utilisateur)){
-      $musique->id_utilisateur = $musique->utilisateur->id;
+      $musique->id_utilisateur = $musique->utilisateur['id'];
     }
 
     return array_filter(

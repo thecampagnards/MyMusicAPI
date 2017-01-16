@@ -28,7 +28,8 @@ class PlaylistController extends Controller
         if(!empty($playlist->id_utilisateur)){
           $playlist->utilisateur = DB::table('UTILISATEUR')
           ->where(['id' => $playlist->id_utilisateur])
-          ->get();
+          ->first();
+          unset($playlist->utilisateur->password)
         }
 
         // on ajoute les musiques
@@ -77,7 +78,7 @@ class PlaylistController extends Controller
 
   private function cleanForQuery($playlist){
     if(!empty($playlist->utilisateur)){
-      $playlist->id_utilisateur = $playlist->utilisateur->id;
+      $playlist->id_utilisateur = $playlist->utilisateur['id'];
     }
 
     return array_filter(
@@ -89,7 +90,7 @@ class PlaylistController extends Controller
     );
   }
 
-  public static function builder(Array $playlist){
+  private function builder(Array $playlist){
 
     $playlist = (object)$playlist;
 
@@ -101,11 +102,11 @@ class PlaylistController extends Controller
     }
 
     // on supprime les données de la table de liaison
-    DB::table('PLAYLIST_MUSIQUE')->where('id', $playlist->id)->delete();
+    DB::table('PLAYLIST_MUSIQUE')->where('id_playlist', $playlist->id)->delete();
 
     // On ajoute les musiques à la table de liaison
     foreach ($playlist->musiques as $musique) {
-      DB::table('PLAYLIST_MUSIQUE')->insert(['id_musique' => $musique->id, 'id_playlist' => $playlist->id]);
+      DB::table('PLAYLIST_MUSIQUE')->insert(['id_musique' => $musique['id'], 'id_playlist' => $playlist->id]);
     }
     return $playlist;
   }
