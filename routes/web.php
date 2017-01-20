@@ -19,6 +19,7 @@ $app->get('/', function () use ($app) {
 $app->group(['prefix' => 'musiques'], function () use ($app) {
   $app
   ->get('/', ['uses' => 'MusiqueController@show'])
+  ->get('/listen/{id}', ['uses' => 'MusiqueController@listen'])
   ->get('/{data}', ['uses' =>'MusiqueController@show']);
 });
 
@@ -41,6 +42,8 @@ $app->post('/login', 'AuthenticationController@authenticate');
 // route de modification de musiques playlists (besoin d'auth)
 $app->group(['middleware' => 'auth'], function($app)
 {
+  // route de check connexion
+  $app->get('/login-check', 'AuthenticationController@check');
   $app->group(['prefix' => 'playlists'], function () use ($app) {
     $app
     ->post('/', ['uses' =>'PlaylistController@add'])
@@ -56,6 +59,7 @@ $app->group(['middleware' => 'auth'], function($app)
   $app->group(['prefix' => 'utilisateur'], function () use ($app) {
     $app
     ->get('/', ['uses' =>'UtilisateurController@show'])
+    ->get('/historique', ['uses' =>'UtilisateurController@historique'])
     ->put('/{id}', ['uses' =>'UtilisateurController@edit']);
   });
 });

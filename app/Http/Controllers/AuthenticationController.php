@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\JWTAuth;
+use Illuminate\Support\Facades\Auth;
 
 class AuthenticationController extends Controller
 {
@@ -42,7 +43,13 @@ class AuthenticationController extends Controller
             return response()->json(['token_absent' => $e->getMessage()], 500);
 
         }
+        $utilisateur = Auth::user();
+        $utilisateur->token = compact('token')['token'];
+        return response()->json($utilisateur);
+    }
 
-        return response()->json(compact('token'));
+    public function check()
+    {
+        return response()->json('ok');
     }
 }

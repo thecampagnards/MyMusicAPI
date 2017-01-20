@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Laravel\Lumen\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Auth;
 
 class Controller extends BaseController
 {
@@ -20,6 +21,13 @@ class Controller extends BaseController
     }
     if(file_exists(getcwd().'/upload/'.$musique->id.'.jpg')){
       $musique->image = $this->getHomeUrl().'/upload/'.$musique->id.'.jpg';
+    }
+  }
+
+  public function checkUtilisateur($id){
+    // on check l'id de la personne connectée et celui donnée
+    if (Auth::id() !== $id) {
+      throw new \Exception('L\'action n\'est pas autorisée.');
     }
   }
 }

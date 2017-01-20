@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\JWTAuth;
+use Illuminate\Support\Facades\DB;
 use App\User;
 
 class UtilisateurController extends Controller
@@ -26,8 +27,38 @@ class UtilisateurController extends Controller
       }
     }
 
+    public function historique(){
+      try{
+        $musiques = DB::table('UTILISATEUR_HISTORIQUE')
+        ->join('MUSIQUE', 'MUSIQUE.id', '=', 'UTILISATEUR_HISTORIQUE.id_musique')
+        ->where('UTILISATEUR_HISTORIQUE.id_utilisateur', Auth::id())
+        ->orderBy('UTILISATEUR_HISTORIQUE.created_at', 'DESC')
+        ->get();
+
+        // on les parcours
+        foreach ($musiques as $key => &$musique) {
+
+          $this->addFiles($musique);
+
+          // on ajoute l'utilisateur
+          if(!empty($musique->id_utilisateur)){
+            $musique->utilisateur = DB::table('UTILISATEUR')
+            ->where(['id' => $musique->id_utilisateur])
+            ->first();
+            unset($musique->utilisateur->password);
+          }
+        }
+        return response()->json($musiques);
+      } catch (Exception $e){
+        return response()->json($e);
+      }
+    }
+
     public function add(Request $request){
       try{
+        if(User::where('email', $utilisateur->email)->first()){
+          throw new \Exception('L\'email existe déjà.');
+        }
         return response()->json($this->builder($request->All()));
       } catch (Exception $e){
         return response()->json($e);
@@ -64,7 +95,7 @@ class UtilisateurController extends Controller
         // on recupere le token de connexion
         $utilisateur->token = Auth::login($utilisateur);
       }elseif($utilisateur->id == Auth::id()){
-        // @todo 
+        // @TODO UPDATE du USER
         DB::update($this->cleanForQuery($utilisateur));
       }
       return $utilisateur;

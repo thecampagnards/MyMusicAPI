@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
 
 class MusiqueController extends Controller
 {
 
-  const DB_STRUCTURE = array('id', 'title', 'length', 'artist', 'id_utilisateur');
+  const DB_STRUCTURE = array('id', 'title', 'length', 'artist', 'id_utilisateur', 'listen');
 
   public function show($data = null){
     try{
@@ -46,9 +47,25 @@ class MusiqueController extends Controller
     }
   }
 
+  public function listen($idMusique){
+    try{
+      // incrémenter dans la bdd
+      DB::table('MUSIQUE')->where($idMusique)->increment('listen');
+
+      // check si utilisateur
+      if (Auth::id()) {
+        DB::table('UTILISATEUR_HISTORIQUE')->insert(['id_utilisateur' => Auth::id(), 'id_musique' => $idMusique]);
+      }
+
+      return response()->json('ok');
+    } catch (Exception $e){
+      return response()->json($e);
+    }
+  }
+
   public function add(Request $request){
     try{
-      return response()->json($this->builder($request->All()));
+      return response()->json($this->builder($request));
     } catch (Exception $e){
       return response()->json($e);
     }
@@ -56,7 +73,7 @@ class MusiqueController extends Controller
 
   public function edit(Request $request, $id){
     try{
-      return response()->json($this->builder($request->All()));
+      return response()->json($this->builder($request));
     } catch (Exception $e){
       return response()->json($e);
     }
@@ -82,7 +99,7 @@ class MusiqueController extends Controller
 
   private function cleanForQuery($musique){
     if(!empty($musique->utilisateur)){
-      $musique->id_utilisateur = $musique->utilisateur['id'];
+      $musique->id_utilisateur = Auth::id();
     }
 
     return array_filter(
@@ -94,9 +111,14 @@ class MusiqueController extends Controller
     );
   }
 
-  private function builder(Array $musique){
+  private function builder(Request $request){
 
-    $musique = (object)$musique;
+    $musique = json_decode($request->get('musique'));
+
+    // check si lien local
+    if(!empty($musique->url) && $request->server('HTTP_HOST') === parse_url($musique->url, PHP_URL_HOST)){
+      unset($musique->url);
+    }
 
     // si on a une url
     if(!empty($musique->url)){
@@ -125,18 +147,31 @@ class MusiqueController extends Controller
       }
       // on télécharge le mp3 avec un delay de 15s
       do{
+        if(file_exists(getcwd().'/upload/'.$musique->id.'.mp3')){
+          unlink(getcwd().'/upload/'.$musique->id.'.mp3');
+        }
         $response = $client->request('GET', $musique->url, ['sink' => getcwd().'/upload/'.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
       }while($response->getStatusCode() !== 200);
       // on recupere les infos du mp3 + ajout du cover
       $newData = json_decode(exec(escapeshellcmd('python '.getcwd().'/../app/Scripts/getInfoMP3.py '.$musique->id.' '.getcwd().'/upload')));
       // on merge les données
       $musique = (object)array_merge((array)$newData, (array)$musique);
+    } elseif ($request->hasFile('file') && $request->file('file')->isValid()) {
+      // upload du file
+      $request->file('file')->move(getcwd().'/upload/', $musique->id.'.mp3');
+      $newData = json_decode(exec(escapeshellcmd('python '.getcwd().'/../app/Scripts/getInfoMP3.py '.$musique->id.' '.getcwd().'/upload')));
+      $musique = (object)array_merge((array)$newData, (array)$musique);
+    }
+
+    if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
+      // upload du cover
+      $request->file('cover')->move(getcwd().'/upload/', $musique->id.'.jpg');
     }
 
     // on l'update
     DB::table('MUSIQUE')->where('id', $musique->id)->update($this->cleanForQuery($musique));
 
-    // on ajoute les fichier
+    // on ajoute les fichiers
     $this->addFiles($musique);
     return $musique;
   }
