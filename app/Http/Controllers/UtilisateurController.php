@@ -56,7 +56,7 @@ class UtilisateurController extends Controller
 
     public function add(Request $request){
       try{
-        if(User::where('email', $utilisateur->email)->first()){
+        if(User::where('email', $request->All()['email'])->first()){
           throw new \Exception('L\'email existe déjà.');
         }
         return response()->json($this->builder($request->All()));
