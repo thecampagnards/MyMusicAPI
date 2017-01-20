@@ -50,7 +50,7 @@ class MusiqueController extends Controller
   public function listen($idMusique){
     try{
       // incrémenter dans la bdd
-      DB::table('MUSIQUE')->where($idMusique)->increment('listen');
+      DB::table('MUSIQUE')->whereId($idMusique)->increment('listen');
 
       // check si utilisateur
       if (Auth::id()) {
