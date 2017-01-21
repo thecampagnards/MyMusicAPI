@@ -9,7 +9,7 @@ use GuzzleHttp\Client;
 class PlaylistController extends Controller
 {
 
-  const DB_STRUCTURE = array('id', 'title', 'status', 'id_utilisateur');
+  const DB_STRUCTURE = array('id', 'title', 'state', 'id_utilisateur');
 
   public function show($data = null){
     try{

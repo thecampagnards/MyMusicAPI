@@ -12,7 +12,7 @@ CREATE TABLE UTILISATEUR (
 
 CREATE TABLE MUSIQUE (
   id int(11) NOT NULL AUTO_INCREMENT,
-  statut bit DEFAULT NULL,
+  state bit DEFAULT NULL,
   title varchar(100) DEFAULT NULL,
   length int(11) DEFAULT NULL,
   artist varchar(65) DEFAULT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE MUSIQUE (
 CREATE TABLE PLAYLIST (
   id int(11) NOT NULL AUTO_INCREMENT,
   title varchar(100) DEFAULT NULL,
-  statut bit DEFAULT NULL,
+  state bit DEFAULT NULL,
   id_utilisateur int(11) DEFAULT NULL,
 
   PRIMARY KEY (id),

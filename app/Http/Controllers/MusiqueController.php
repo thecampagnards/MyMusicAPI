@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class MusiqueController extends Controller
 {
 
-  const DB_STRUCTURE = array('id', 'title', 'length', 'artist', 'id_utilisateur', 'listen');
+  const DB_STRUCTURE = array('id', 'title', 'length', 'artist', 'id_utilisateur', 'listen', 'state');
 
   public function show($data = null){
     try{
