@@ -174,14 +174,17 @@ class MusiqueController extends Controller
       // upload du cover
       $request->file('cover')->move($downloadDir, $musique->id.'.jpg');
     }
+
     // check du fichier si il n'existe pas déja
-    $idExist = exec(escapeshellcmd('/'.$scriptDir.'/checkFileMP3.sh '.$downloadDir.'/'.$musique->id.'.mp3 '.$downloadDir));
-    if(!empty($idExist)){
-      // on la supprime
-      $this->remove($musique->id);
-      // on recupère le titre de la chanson
-      $musiqueExist = DB::table('MUSIQUE')->whereId($idExist)->first();
-      throw new \Exception('La musique existe déjà ('.json_encode($musiqueExist).').');
+    if(!empty($musique->url) || ($request->hasFile('cover') && $request->file('cover')->isValid())){
+      $idExist = exec(escapeshellcmd('/'.$scriptDir.'/checkFileMP3.sh '.$downloadDir.'/'.$musique->id.'.mp3 '.$downloadDir));
+      if(!empty($idExist)){
+        // on la supprime
+        $this->remove($musique->id);
+        // on recupère le titre de la chanson
+        $musiqueExist = DB::table('MUSIQUE')->whereId($idExist)->first();
+        throw new \Exception('La musique existe déjà ('.json_encode($musiqueExist).').');
+      }
     }
 
     // on l'update
