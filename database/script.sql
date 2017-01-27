@@ -18,6 +18,7 @@ CREATE TABLE MUSIQUE (
   artist varchar(65) DEFAULT NULL,
   listen int(11) DEFAULT 0,
   id_utilisateur int(11) DEFAULT NULL,
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
   FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id)

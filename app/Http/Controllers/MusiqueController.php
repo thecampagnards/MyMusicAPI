@@ -142,20 +142,21 @@ class MusiqueController extends Controller
       $musique->id = DB::table('MUSIQUE')->insertGetId($this->cleanForQuery($musique));
     }
 
+    // dossier d'upload et des scripts
+    $downloadDir = getcwd().'/upload/';
+    $scriptDir = getcwd().'/../app/Scripts/';
+
     // on download le mp3
     if(!empty($musique->url)){
       // on check la promise + on la wait
       if(!empty($promise)){
         $promise->wait();
       }
-      // dossier d'upload et des scripts
-      $downloadDir = getcwd().'/upload/';
-      $scriptDir = getcwd().'/../app/Scripts/';
       // on télécharge le mp3 avec un delay de 15s
       do{
         // on supprime si le fichier existe
-        if(file_exists(getcwd().'/upload/'.$musique->id.'.mp3')){
-          unlink(getcwd().'/upload/'.$musique->id.'.mp3');
+        if(file_exists($downloadDir.$musique->id.'.mp3')){
+          unlink($downloadDir.$musique->id.'.mp3');
         }
         $response = $client->request('GET', $musique->url, ['sink' => $downloadDir.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
       }while($response->getStatusCode() !== 200);
@@ -163,28 +164,31 @@ class MusiqueController extends Controller
       $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'/getInfoMP3.py '.$musique->id.' '.$downloadDir)));
       // on merge les données
       $musique = (object)array_merge((array)$newData, (array)$musique);
-    } elseif ($request->hasFile('file') && $request->file('file')->isValid()) {
+    }
+    // si on a un fichier upload en mp3
+    elseif ($request->hasFile('file') && $request->file('file')->isValid()) {
       // upload du file
-      $request->file('file')->move(getcwd().'/upload/', $musique->id.'.mp3');
+      $request->file('file')->move($downloadDir, $musique->id.'.mp3');
       $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'/getInfoMP3.py '.$musique->id.' '.$downloadDir)));
       $musique = (object)array_merge((array)$newData, (array)$musique);
     }
 
-    if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-      // upload du cover
-      $request->file('cover')->move($downloadDir, $musique->id.'.jpg');
-    }
-
     // check du fichier si il n'existe pas déja
-    if(!empty($musique->url) || ($request->hasFile('cover') && $request->file('cover')->isValid())){
+    if(!empty($musique->url) || ($request->hasFile('file') && $request->file('file')->isValid())){
       $idExist = exec(escapeshellcmd('/'.$scriptDir.'/checkFileMP3.sh '.$downloadDir.'/'.$musique->id.'.mp3 '.$downloadDir));
       if(!empty($idExist)){
         // on la supprime
         $this->remove($musique->id);
         // on recupère le titre de la chanson
         $musiqueExist = DB::table('MUSIQUE')->whereId($idExist)->first();
-        throw new \Exception('La musique existe déjà ('.json_encode($musiqueExist).').');
+        throw new \Exception('La musique existe déjà : '.json_encode($musiqueExist).'.');
       }
+    }
+
+    // si on a la cover d'upload
+    if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
+      // upload du cover
+      $request->file('cover')->move($downloadDir, $musique->id.'.jpg');
     }
 
     // on l'update
