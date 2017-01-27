@@ -78,7 +78,7 @@ class PlaylistController extends Controller
 
   private function cleanForQuery($playlist){
     if(!empty($playlist->utilisateur)){
-      $playlist->id_utilisateur = $playlist->utilisateur['id'];
+      $playlist->id_utilisateur = Auth::id();
     }
 
     return array_filter(

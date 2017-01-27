@@ -94,7 +94,7 @@ class UtilisateurController extends Controller
         $utilisateur = User::create($this->cleanForQuery($utilisateur));
         // on recupere le token de connexion
         $utilisateur->token = Auth::login($utilisateur);
-      }elseif($utilisateur->id == Auth::id()){
+      }elseif($utilisateur->id === Auth::id()){
         // @TODO UPDATE du USER
         DB::update($this->cleanForQuery($utilisateur));
       }
