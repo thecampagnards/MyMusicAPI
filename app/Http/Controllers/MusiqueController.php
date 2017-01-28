@@ -92,7 +92,7 @@ class MusiqueController extends Controller
     $musique = new \StdClass();
     $musique->id = $id;
     $this->addFiles($musique);
-    if(!empty($musique->link)){
+    if(!empty($musique->url)){
       unlink(getcwd().'/upload/'.$musique->id.'.mp3');
     }
     if(!empty($musique->image)){
@@ -133,6 +133,21 @@ class MusiqueController extends Controller
         $promise->then(function ($response) use (&$musique){
           // on recupere le lien de dl
           $musique->url = json_decode($response->getBody())->link;
+        });
+      }
+      //check si soundcloud
+      elseif (preg_match("/https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/", $musique->url) === 1) {
+        $client = new Client();
+        // on recupère les données sur soundcloud api
+        $promise = $client->requestAsync('GET', 'http://api.soundcloud.com/resolve?url='.$musique->url.'&client_id='.env('SOUND_CLOUD_CLIENT_ID'));
+        $promise->then(function ($response) use (&$musique){
+          $data = json_decode($response->getBody());
+          // on rempli notre objet musique
+          $musique->title = $data->title;
+          $musique->artist = $data->user->username;
+          //$musique->length = $data->duration;
+          $musique->url = $data->stream_url.'?client_id='.env('SOUND_CLOUD_CLIENT_ID');
+          $musique->cover = $data->artwork_url;
         });
       }
     }
@@ -183,6 +198,17 @@ class MusiqueController extends Controller
         $musiqueExist = DB::table('MUSIQUE')->whereId($idExist)->first();
         throw new \Exception('La musique existe déjà : '.json_encode($musiqueExist).'.');
       }
+    }
+
+    // si la cover est sous forme de lien on l'a télécharge
+    if(!empty($musique->cover)){
+      do{
+        // on supprime si le fichier existe
+        if(file_exists($downloadDir.$musique->id.'.jpg')){
+          unlink($downloadDir.$musique->id.'.jpg');
+        }
+        $response = $client->request('GET', $musique->cover, ['sink' => $downloadDir.$musique->id.'.jpg', 'connect_timeout' => 15, 'http_errors' => false]);
+      }while($response->getStatusCode() !== 200);
     }
 
     // si on a la cover d'upload
