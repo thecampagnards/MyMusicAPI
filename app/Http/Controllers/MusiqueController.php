@@ -145,7 +145,7 @@ class MusiqueController extends Controller
           // on rempli notre objet musique
           $musique->title = $data->title;
           $musique->artist = $data->user->username;
-          //$musique->length = $data->duration;
+          $musique->length = round($data->duration/1000);
           $musique->url = $data->stream_url.'?client_id='.env('SOUND_CLOUD_CLIENT_ID');
           $musique->cover = $data->artwork_url;
         });
@@ -176,7 +176,7 @@ class MusiqueController extends Controller
         $response = $client->request('GET', $musique->url, ['sink' => $downloadDir.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
       }while($response->getStatusCode() !== 200);
       // on recupere les infos du mp3 + ajout du cover
-      $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'/getInfoMP3.py '.$musique->id.' '.$downloadDir)));
+      $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'getInfoMP3.py '.$musique->id.' '.$downloadDir)));
       // on merge les données
       $musique = (object)array_merge((array)$newData, (array)$musique);
     }
@@ -184,13 +184,13 @@ class MusiqueController extends Controller
     elseif ($request->hasFile('file') && $request->file('file')->isValid()) {
       // upload du file
       $request->file('file')->move($downloadDir, $musique->id.'.mp3');
-      $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'/getInfoMP3.py '.$musique->id.' '.$downloadDir)));
+      $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'getInfoMP3.py '.$musique->id.' '.$downloadDir)));
       $musique = (object)array_merge((array)$newData, (array)$musique);
     }
 
     // check du fichier si il n'existe pas déja
     if(!empty($musique->url) || ($request->hasFile('file') && $request->file('file')->isValid())){
-      $idExist = exec(escapeshellcmd('/'.$scriptDir.'/checkFileMP3.sh '.$downloadDir.'/'.$musique->id.'.mp3 '.$downloadDir));
+      $idExist = exec(escapeshellcmd($scriptDir.'checkFileMP3.sh '.$downloadDir.$musique->id.'.mp3 '.$downloadDir));
       if(!empty($idExist)){
         // on la supprime
         $this->remove($musique->id);
