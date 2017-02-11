@@ -125,9 +125,9 @@ class MusiqueController extends Controller
 
     // si on a une url
     if(!empty($musique->url)){
+      $client = new Client();
       //check si youtube
-      if (preg_match("/(http:|https:)?\\/\\/(www\\.)?(youtube.com|youtu.be)\\/(watch)?(\\?v=)?(\\S+)?/", $musique->url) === 1){
-        $client = new Client();
+      if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
         // promise de la requete l'api mp3 downloader
         $promise = $client->requestAsync('GET', 'https://www.youtubeinmp3.com/fetch/?format=JSON&video='.$musique->url);
         $promise->then(function ($response) use (&$musique){
@@ -137,7 +137,6 @@ class MusiqueController extends Controller
       }
       //check si soundcloud
       elseif (preg_match("/https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/", $musique->url) === 1) {
-        $client = new Client();
         // on recupère les données sur soundcloud api
         $promise = $client->requestAsync('GET', 'http://api.soundcloud.com/resolve?url='.$musique->url.'&client_id='.env('SOUND_CLOUD_CLIENT_ID'));
         $promise->then(function ($response) use (&$musique){
