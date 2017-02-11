@@ -199,8 +199,13 @@ class MusiqueController extends Controller
       }
     }
 
+    // si on a la cover d'upload
+    if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
+      // upload du cover
+      $request->file('cover')->move($downloadDir, $musique->id.'.jpg');
+    }
     // si la cover est sous forme de lien on l'a télécharge
-    if(!empty($musique->cover)){
+    else if(!empty($musique->cover)){
       do{
         // on supprime si le fichier existe
         if(file_exists($downloadDir.$musique->id.'.jpg')){
@@ -208,12 +213,6 @@ class MusiqueController extends Controller
         }
         $response = $client->request('GET', $musique->cover, ['sink' => $downloadDir.$musique->id.'.jpg', 'connect_timeout' => 15, 'http_errors' => false]);
       }while($response->getStatusCode() !== 200);
-    }
-
-    // si on a la cover d'upload
-    if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-      // upload du cover
-      $request->file('cover')->move($downloadDir, $musique->id.'.jpg');
     }
 
     // on l'update
