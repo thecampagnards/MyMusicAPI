@@ -131,11 +131,11 @@ class MusiqueController extends Controller
         // promise de la requete l'api mp3 downloader
         // ! \\ en attendant
         parse_str(parse_url($musique->url, PHP_URL_QUERY ), $temp);
-        $musique->id = $temp['v'];
-        $promise = $client->requestAsync('GET', 'http://youtubemp3api.com/@api/json/mp3/'.$musique->id);
+        $musique->idYt = $temp['v'];
+        $promise = $client->requestAsync('GET', 'http://youtubemp3api.com/@api/json/mp3/'.$musique->idYt);
         $promise->then(function ($response) use (&$musique){
           // on recupere le lien de dl
-          $musique->url = json_decode($response->getBody())->vidInfo->0->dloadUrl;
+          $musique->url = json_decode($response->getBody())->vidInfo->{0}->dloadUrl;
           $musique->title = json_decode($response->getBody())->vidTitle;
         });
         // ! \\
