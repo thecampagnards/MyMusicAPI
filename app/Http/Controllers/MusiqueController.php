@@ -125,9 +125,9 @@ class MusiqueController extends Controller
 
     // si on a une url
     if(!empty($musique->url)){
-      $client = new Client();
+      //$client = new Client();
       //check si youtube
-      if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
+      /*if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
         // promise de la requete l'api mp3 downloader
         $promise = $client->requestAsync('GET', 'https://www.youtubeinmp3.com/fetch/?format=JSON&video='.$musique->url);
         $promise->then(function ($response) use (&$musique){
@@ -136,8 +136,9 @@ class MusiqueController extends Controller
         });
       }
       //check si soundcloud
-      elseif (preg_match("/https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/", $musique->url) === 1) {
+      else*/if (preg_match("/https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/", $musique->url) === 1) {
         // on recupère les données sur soundcloud api
+        $client = new Client();
         $promise = $client->requestAsync('GET', 'http://api.soundcloud.com/resolve?url='.$musique->url.'&client_id='.env('SOUND_CLOUD_CLIENT_ID'));
         $promise->then(function ($response) use (&$musique){
           $data = json_decode($response->getBody());
@@ -162,20 +163,27 @@ class MusiqueController extends Controller
 
     // on download le mp3
     if(!empty($musique->url)){
-      // on check la promise + on la wait
-      if(!empty($promise)){
-        $promise->wait();
+      // si c'est youtube
+      if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
+        $newData = json_decode(exec(escapeshellcmd($scriptDir.'downloadYoutubeMP3.sh '.$musique->url.' '.$musique->id.' '.$downloadDir)));
       }
-      // on télécharge le mp3 avec un delay de 15s
-      do{
-        // on supprime si le fichier existe
-        if(file_exists($downloadDir.$musique->id.'.mp3')){
-          unlink($downloadDir.$musique->id.'.mp3');
+      // si c'est un autre downlaod style soundcloud
+      else{
+        // on check la promise + on la wait
+        if(!empty($promise)){
+          $promise->wait();
         }
-        $response = $client->request('GET', $musique->url, ['sink' => $downloadDir.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
-      }while($response->getStatusCode() !== 200);
-      // on recupere les infos du mp3 + ajout du cover
-      $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'getInfoMP3.py '.$musique->id.' '.$downloadDir)));
+        // on télécharge le mp3 avec un delay de 15s
+        do{
+          // on supprime si le fichier existe
+          if(file_exists($downloadDir.$musique->id.'.mp3')){
+            unlink($downloadDir.$musique->id.'.mp3');
+          }
+          $response = $client->request('GET', $musique->url, ['sink' => $downloadDir.$musique->id.'.mp3', 'connect_timeout' => 15, 'http_errors' => false]);
+        }while($response->getStatusCode() !== 200);
+        // on recupere les infos du mp3 + ajout du cover
+        $newData = json_decode(exec(escapeshellcmd('python '.$scriptDir.'getInfoMP3.py '.$musique->id.' '.$downloadDir)));
+      }
       // on merge les données
       $musique = (object)array_merge((array)$newData, (array)$musique);
     }
