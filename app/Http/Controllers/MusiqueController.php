@@ -129,7 +129,17 @@ class MusiqueController extends Controller
       //check si youtube
       /*if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
         // promise de la requete l'api mp3 downloader
-        $promise = $client->requestAsync('GET', 'https://www.youtubeinmp3.com/fetch/?format=JSON&video='.$musique->url);
+        // ! \\ en attendant
+        /*parse_str(parse_url($musique->url, PHP_URL_QUERY ), $temp);
+        $musique->idYt = $temp['v'];
+        $promise = $client->requestAsync('GET', 'http://youtubemp3api.com/@api/json/mp3/'.$musique->idYt);
+        $promise->then(function ($response) use (&$musique){
+          // on recupere le lien de dl
+          $musique->url = json_decode($response->getBody())->vidInfo->{0}->dloadUrl;
+          $musique->title = json_decode($response->getBody())->vidTitle;
+        });*/
+        // ! \\
+        $promise = $client->requestAsync('GET', 'https://www.convertmp3.io/fetch/?format=JSON&video='.$musique->url);
         $promise->then(function ($response) use (&$musique){
           // on recupere le lien de dl
           $musique->url = json_decode($response->getBody())->link;
