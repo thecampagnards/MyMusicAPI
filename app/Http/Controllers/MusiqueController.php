@@ -139,7 +139,7 @@ class MusiqueController extends Controller
           $musique->title = json_decode($response->getBody())->vidTitle;
         });*/
         // ! \\
-        $promise = $client->requestAsync('GET', 'https://www.convertmp3.io/fetch/?format=JSON&video='.$musique->url);
+        /*$promise = $client->requestAsync('GET', 'https://www.convertmp3.io/fetch/?format=JSON&video='.$musique->url);
         $promise->then(function ($response) use (&$musique){
           // on recupere le lien de dl
           $musique->url = json_decode($response->getBody())->link;
