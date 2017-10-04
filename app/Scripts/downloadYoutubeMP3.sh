@@ -17,6 +17,10 @@ read video_thumbnail_url <&42
 read video_filename <&42
 read video_duration <&42
 
+#calcul de la duree en seconde
+IFS=: read minutes secondes <<< $video_duration
+video_duration=$(($minutes*60 + $secondes))
+
 #dl de la jaquette + mp3
 wget -O "/tmp/$video_filename" "$video_url_with_thumbnail"
 wget -O "$dossier/$filename.jpg" "$video_thumbnail_url"
