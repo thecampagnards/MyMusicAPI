@@ -38,12 +38,12 @@ IFS=: read minutes secondes <<< $video_duration
 video_duration=$(($minutes*60 + $secondes))
 
 #dl de la jaquette + mp3
-wget -O "/tmp/$video_filename" "$video_url_with_thumbnail"
-wget -O "$dossier/$filename.jpg" "$video_thumbnail_url"
+wget -O "/tmp/$video_filename" "$video_url_with_thumbnail" &> /dev/null
+wget -O "$dossier/$filename.jpg" "$video_thumbnail_url" &> /dev/null
 
 #on converti le mp3
-ffmpeg -i "/tmp/$video_filename" "/tmp/$filename.wav"
-lame -b 320 "/tmp/$filename.wav" "$dossier/$filename.mp3"
+ffmpeg -i "/tmp/$video_filename" "/tmp/$filename.wav" &> /dev/null
+lame -b 320 "/tmp/$filename.wav" "$dossier/$filename.mp3" &> /dev/null
 
 #suppr des temps
 rm -f "/tmp/$video_filename" "/tmp/$filename.wav"
