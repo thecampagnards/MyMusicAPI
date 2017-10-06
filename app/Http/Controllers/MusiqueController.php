@@ -177,7 +177,7 @@ class MusiqueController extends Controller
       if (preg_match("/(http:|https:)?\/\/(www\.)?(m\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/", $musique->url) === 1){
         $newData = json_decode(exec(escapeshellcmd($scriptDir.'downloadYoutubeMP3.sh '.$musique->url.' '.$musique->id.' '.$downloadDir)));
       }
-      // si c'est un autre downlaod style soundcloud
+      // si c'est un autre download style soundcloud
       else{
         // on check la promise + on la wait
         if(!empty($promise)){

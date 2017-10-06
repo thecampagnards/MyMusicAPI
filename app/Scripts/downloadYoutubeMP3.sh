@@ -17,6 +17,22 @@ read video_thumbnail_url <&42
 read video_filename <&42
 read video_duration <&42
 
+# recupération des datas de la musique
+data=$(curl -G -s "http://musicbrainz.org/ws/2/release-group/?fmt=json&" --data-urlencode "query=artistname:$video_title")
+score=$(jq -r '."release-groups"[0].score' <<< $data)
+if [ $score -eq 100 ];then
+  video_title=$(jq -r '."release-groups"[0].title' <<< $data)
+  video_artist=$(jq -r '."release-groups"[0]."artist-credit"[0].artist.name' <<< $data)
+  tmp=$(jq -r '."release-groups"[0]."artist-credit"[0].joinphrase' <<< $data)
+  [ "$tmp"  != "null" ] && video_artist+=$tmp
+  tmp=$(jq -r '."release-groups"[0]."artist-credit"[1].artist.name' <<< $data)
+  [ "$tmp" != "null" ] && video_artist+=$tmp
+  video_mid=$(jq -r '."release-groups"[0].releases[0].id' <<< $data)
+
+  data=$(curl -s -L "http://coverartarchive.org/release/$video_mid")
+  video_thumbnail_url=$(jq -r '.images[0].thumbnails.small' <<< $data)
+fi
+
 #calcul de la duree en seconde
 IFS=: read minutes secondes <<< $video_duration
 video_duration=$(($minutes*60 + $secondes))
@@ -34,4 +50,6 @@ rm -f "/tmp/$video_filename" "/tmp/$filename.wav"
 exec 42<&-
 rm -f $TMP_FILE
 
-echo -e "{\"title\":\""$video_title"\", \"length\":\""$video_duration"\"}"
+echo -e "{\"mid\":\""$video_mid"\", \"title\":\""$video_title"\",\"artist\":\""$video_artist"\", \"length\":\""$video_duration"\"}"
+
+exit 0
