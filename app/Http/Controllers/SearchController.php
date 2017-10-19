@@ -25,7 +25,7 @@ class SearchController extends Controller
           $musique->artist        = $data->user->username;
           $musique->length        = round($data->duration / 1000);
           $musique->url           = $data->stream_url . '?client_id=' . env('SOUND_CLOUD_CLIENT_ID');
-          $musique->permaurl      = $data->permaurl;
+          $musique->permalink_url = $data->permalink_url;
           $musique->cover         = $data->artwork_url;
           $musiques->SoundCloud[] = $musique;
         }
