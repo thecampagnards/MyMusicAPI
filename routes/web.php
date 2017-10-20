@@ -26,7 +26,7 @@ $app->group(['prefix' => 'musiques'], function () use ($app) {
 // route de recherche
 $app->group(['prefix' => 'search'], function () use ($app) {
   $app
-  ->get('/{search}', ['uses' => 'SearchController@show']);
+  ->get('/', ['uses' => 'SearchController@show']);
 });
 
 // route d'info des playlists
